@@ -21,26 +21,43 @@ class HomeViewModel: ObservableObject {
     @Published var data: [Movie] = []
     @Published var isError: Bool = false
     @Published var movieState: MovieState = .idle
+    
+    // Movies Page
+    @Published var page: Int = 1
+    
     private let services: MovieServicesProtocol
     
     init(services: MovieServicesProtocol = MovieServicesImpl()) {
         self.services = services
     }
     
-    func getMovies(page: String = "1") async throws {
-        self.movieState = .loading
-        do {
-            let response = try await services.getMovies(endPoint: .getMovies(page: page))
-            if !response.results.isEmpty {
-                data = response.results
+    func getMovies() {
+        Task {
+            try await Task.sleep(nanoseconds: 3 * 1_000_000_000)
+            self.movieState = .loading
+            do {
+                let response = try await services.getMovies(endPoint: .getMovies(page: self.page.description))
+                if !response.results.isEmpty {
+                    data.append(contentsOf: response.results)
+                    self.movieState = .loaded
+                }
+                self.isError = false
                 self.movieState = .loaded
+            } catch {
+                self.isError = true
+                self.movieState = .error
             }
-            self.isError = false
-            self.movieState = .loaded
-        } catch {
-            self.isError = true
-            self.movieState = .error
         }
     }
     
+    func loadMoreMovies() {
+        page += 1
+        getMovies()
+    }
+    
+    func refreshMovies() {
+        page = 1
+        data.removeAll()
+        getMovies()
+    }
 }

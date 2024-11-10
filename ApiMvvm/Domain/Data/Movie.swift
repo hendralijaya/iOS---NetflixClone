@@ -8,6 +8,7 @@
 import Foundation
 
 struct Movie: Codable, Equatable {
+    let uuid: String = UUID().uuidString
     let adult: Bool
     let backdropPath: String?
     let genreIds: [Int]
